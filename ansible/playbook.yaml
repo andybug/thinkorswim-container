@@ -1,0 +1,72 @@
+---
+- hosts: localhost
+  vars:
+    timezone: UTC
+    home_dir: '{{ lookup("env", "HOME") }}'
+    data_dir: '{{ home_dir }}/.local/share/thinkorswim'
+    buildkit_addr: 'unix:///run/buildkit/buildkitd.sock'
+    install_script_url: 'https://mediaserver.thinkorswim.com/installer/InstFiles/thinkorswim_installer.sh'
+  tasks:
+    - name: output data directory
+      debug:
+        msg: 'installing to {{ data_dir }}'
+        
+    - name: data directories
+      ansible.builtin.file:
+        name: '{{ item }}'
+        state: directory
+      loop:
+        - '{{ data_dir }}'
+        - '{{ data_dir }}/root'
+        - '{{ data_dir }}/home'
+
+    - name: container script
+      ansible.builtin.template:
+        src: container.sh.j2
+        dest: '{{ data_dir }}/container.sh'
+        mode: '0755'
+
+    - name: 'buildkit: build and extract image'
+      ansible.builtin.command:
+        cmd: 'buildctl 
+          --addr {{ buildkit_addr }}
+          build
+          --frontend=dockerfile.v0
+          --local context=../image
+          --local dockerfile=../image
+          --output type=local,dest={{ data_dir }}/root
+          --opt build-arg:UID={{ ansible_user_uid }}
+          --opt build-arg:GID={{ ansible_user_gid }}'
+        creates: '{{ data_dir }}/root/etc/os-release'
+        
+    - name: download install script
+      ansible.builtin.get_url:
+        url: '{{ install_script_url }}'
+        dest: '{{ data_dir }}/home/thinkorswim_installer.sh'
+        mode: '0755'
+
+    - name: installer instructions
+      ansible.builtin.debug:
+        msg: 'Run {{ data_dir }}/container.sh /home/thinkorswim/thinkorswim_installer.sh'
+        
+    - name: wait for install completion
+      ansible.builtin.pause:
+        prompt: Press <Enter> to continue once installation is complete
+        
+    - name: create install directories
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: directory
+      loop:
+        - '{{ home_dir }}/.local/share/icons'
+        - '{{ home_dir }}/.local/share/applications'
+        
+    - name: install icon
+      ansible.builtin.copy:
+        src: '{{ data_dir }}/home/thinkorswim/.install4j/thinkorswim.png'
+        dest: '{{ home_dir }}/.local/share/icons/thinkorswim.png'
+        
+    - name: install desktop entry
+      ansible.builtin.template:
+        src: thinkorswim.desktop.j2
+        dest: '{{ home_dir }}/.local/share/applications/thinkorswim.desktop'

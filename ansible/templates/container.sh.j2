@@ -1,0 +1,22 @@
+#!/bin/sh
+
+DATA_DIR={{ data_dir }}
+
+exec \
+  env -i \
+  bwrap \
+    --unshare-all \
+    --share-net \
+    --ro-bind ${DATA_DIR}/root / \
+    --proc /proc \
+    --dev /dev \
+    --tmpfs /tmp \
+    --bind ${DATA_DIR}/home /home/thinkorswim \
+    --ro-bind ${XAUTHORITY} /home/thinkorswim/.Xauthority \
+    --ro-bind /tmp/.X11-unix /tmp/.X11-unix \
+    --ro-bind /etc/resolv.conf /etc/resolv.conf \
+    --setenv HOME /home/thinkorswim \
+    --setenv USER thinkorswim \
+    --setenv DISPLAY ${DISPLAY} \
+    --setenv TZ {{timezone}} \
+  $@
