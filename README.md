@@ -15,12 +15,8 @@ This repository contains scripts to create a container environment that the *thi
 
 1. start **buildkitd**
    
-   - the buildkit daemon can be run rootless with the proper system configuration (see the link above). This guide assumes you will be running it as root
-   - set the `--group` flag to your current user's group. Doing so causes the daemon to create the communication socket with permissions so that your user will be able to write to it
-   - only necessary if you do not already have it running
-   
    ```bash
-   sudo buildkitd --group $(id --group)
+   rootlesskit --net=slirp4netns --copy-up=/etc --disable-host-loopback buildkitd
    ```
 
 2. run the **ansible** playbook

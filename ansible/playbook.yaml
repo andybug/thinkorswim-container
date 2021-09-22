@@ -4,7 +4,7 @@
     timezone: UTC
     home_dir: '{{ lookup("env", "HOME") }}'
     data_dir: '{{ home_dir }}/.local/share/thinkorswim'
-    buildkit_addr: 'unix:///run/buildkit/buildkitd.sock'
+    buildkit_addr: 'unix:///run/user/{{ ansible_user_uid }}/buildkit/buildkitd.sock'
     install_script_url: 'https://mediaserver.thinkorswim.com/installer/InstFiles/thinkorswim_installer.sh'
   tasks:
     - name: output data directory

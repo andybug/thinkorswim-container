@@ -1,4 +1,4 @@
-FROM azul/zulu-openjdk:8u282
+FROM azul/zulu-openjdk:11
 
 ARG UID 1000
 ARG GID 1000
